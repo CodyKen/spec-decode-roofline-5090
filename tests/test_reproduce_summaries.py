@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -75,3 +76,36 @@ def test_reproduce_grid(filename, runs, tmp_path):
                 expected[column],
                 check_names=False,
             )
+
+def compare_json(actual, expected):
+    if isinstance(expected, dict):
+        assert isinstance(actual, dict)
+        assert actual.keys() == expected.keys()
+
+        for key in expected:
+            compare_json(actual[key], expected[key])
+
+    elif isinstance(expected, list):
+        assert isinstance(actual, list)
+        assert len(actual) == len(expected)
+
+        for a, e in zip(actual, expected):
+            compare_json(a, e)
+
+    elif isinstance(expected, bool):
+        assert actual is expected
+
+    elif isinstance(expected, (int, float)):
+        assert isinstance(actual, (int, float))
+        assert not isinstance(actual, bool)
+        assert np.isclose(
+            actual,
+            expected,
+            rtol=1e-9,
+            atol=0,
+            equal_nan=True,
+        )
+
+    else:
+        assert actual == expected
+
