@@ -83,37 +83,38 @@ def test_reproduce_grid(filename, runs, tmp_path):
                 check_names=False,
             )
 
-def compare_json(actual, expected):
+def compare_json(actual, expected, path="root"):
     if isinstance(expected, dict):
-        assert isinstance(actual, dict)
-        assert actual.keys() == expected.keys()
+        assert isinstance(actual, dict), f"{path}: expected dict"
+        assert actual.keys() == expected.keys(), f"{path}: keys differ"
 
         for key in expected:
-            compare_json(actual[key], expected[key])
+            compare_json(actual[key], expected[key], f"{path}.{key}")
 
     elif isinstance(expected, list):
-        assert isinstance(actual, list)
-        assert len(actual) == len(expected)
+        assert isinstance(actual, list), f"{path}: expected list"
+        assert len(actual) == len(expected), f"{path}: list lengths differ"
 
-        for a, e in zip(actual, expected):
-            compare_json(a, e)
+        for i, (a, e) in enumerate(zip(actual, expected)):
+            compare_json(a, e, f"{path}[{i}]")
 
     elif isinstance(expected, bool):
-        assert actual is expected
+        assert actual is expected, f"{path}: {actual} != {expected}"
 
     elif isinstance(expected, (int, float)):
-        assert isinstance(actual, (int, float))
-        assert not isinstance(actual, bool)
+        assert isinstance(actual, (int, float)) and not isinstance(actual, bool), (
+            f"{path}: expected number"
+        )
         assert np.isclose(
             actual,
             expected,
             rtol=1e-9,
             atol=0,
             equal_nan=True,
-        )
+        ), f"{path}: {actual} != {expected}"
 
     else:
-        assert actual == expected
+        assert actual == expected, f"{path}: {actual} != {expected}"
 
 
 @pytest.mark.parametrize("filename,run,ref", GOODPUT_CASES)
