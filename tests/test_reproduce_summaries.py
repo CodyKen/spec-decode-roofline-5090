@@ -70,12 +70,26 @@ def test_reproduce_grid(filename, runs, tmp_path):
 
     for column in expected.columns:
         if pd.api.types.is_numeric_dtype(expected[column]):
-            assert np.isclose(
+            matches = np.isclose(
                 actual[column].to_numpy(),
                 expected[column].to_numpy(),
                 rtol=1e-9,
                 equal_nan=True,
-            ).all(), f"Mismatch in {filename}: {column}"
+            )
+
+            for i, match in enumerate(matches):
+                if not match:
+                    row = expected.index[i]
+                    actual_value = actual[column].iloc[i]
+                    expected_value = expected[column].iloc[i]
+
+                    pytest.fail(
+                        f"Mismatch in {filename}\n"
+                        f"setting={row[0]}, context={row[1]}, "
+                        f"concurrency={row[2]}\n"
+                        f"column={column}\n"
+                        f"actual={actual_value}, expected={expected_value}"
+                    )
         else:
             pd.testing.assert_series_equal(
                 actual[column],
